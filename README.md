@@ -11,202 +11,191 @@
     <style>
         body {
             font-family: 'Pretendard', sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* 스크롤바 이중 생김 방지 */
-            background-color: #f1f5f9;
+            background-color: #f1f5f9; /* Slate-100 */
+            color: #334155; /* Slate-700 */
         }
 
-        /* [핵심 수정] 지도가 안보이는 문제 해결을 위해 강제 높이 지정 */
-        #map-container {
-            position: absolute;
-            top: 64px; /* 헤더 높이만큼 아래로 */
-            left: 0;
-            right: 420px; /* 사이드바 너비만큼 공간 확보 */
-            bottom: 0;
-            background-color: #e2e8f0; /* 지도가 안뜰때 보이는 배경색 */
-        }
-        
-        #sidebar {
-            position: absolute;
-            top: 64px;
-            right: 0;
-            bottom: 0;
-            width: 420px;
-            background-color: white;
-            border-left: 1px solid #cbd5e1;
-            display: flex;
-            flex-direction: column;
-            z-index: 20;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* 모바일 대응 (화면이 작을 때) */
-        @media (max-width: 1024px) {
-            #map-container {
-                position: relative;
-                top: 0;
-                right: 0;
-                height: 50vh;
-            }
-            #sidebar {
-                position: relative;
-                top: 0;
-                width: 100%;
-                height: 50vh;
-                border-left: none;
-                border-top: 1px solid #cbd5e1;
-            }
-            body {
-                overflow: auto; /* 모바일에서는 전체 스크롤 허용 */
-                display: flex;
-                flex-direction: column;
-            }
-        }
-
-        /* 아이콘 및 기타 스타일 */
+        /* Custom Marker Icon Style */
         .regulator-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            line-height: 28px;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
             color: white;
             border-radius: 50%;
             border: 2px solid #ffffff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-            transition: transform 0.2s;
+            width: 32px;
+            height: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
         }
         .regulator-icon:hover {
             transform: scale(1.15);
-            z-index: 1000 !important;
+            z-index: 999 !important;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8fafc;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Layout Utility */
+        .main-content-area {
+            height: calc(100vh - 80px); 
+        }
+        @media (max-width: 1024px) {
+            .main-content-area {
+                height: auto;
+                min-height: 100vh;
+            }
         }
         
-        /* 커스텀 스크롤바 */
-        .custom-scroll { overflow-y: auto; }
-        .custom-scroll::-webkit-scrollbar { width: 8px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Select 박스 화살표 */
+        /* Select Dropdown Styling */
         select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
             -webkit-appearance: none;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.75rem center;
-            background-repeat: no-repeat;
-            background-size: 1.25em 1.25em;
-            padding-right: 2.5rem;
         }
     </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden">
 
-    <header class="h-16 bg-slate-900 text-white flex items-center justify-between px-6 shadow-md z-50 relative">
-        <div class="flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6 text-teal-400">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
-            </svg>
-            <h1 class="text-lg lg:text-xl font-bold tracking-tight">서부안전팀 정압기 대시보드</h1>
-        </div>
-        <div class="flex items-center gap-4">
-            <span id="fileStatus" class="text-sm text-slate-400 font-medium hidden sm:block">파일 없음</span>
-            <label for="csvFileInput" class="cursor-pointer bg-teal-600 hover:bg-teal-500 transition text-white px-4 py-2 rounded shadow text-sm font-bold flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                CSV 업로드
-            </label>
-            <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
-        </div>
-    </header>
-
-    <div id="map-container">
-        <div id="map"></div>
-        
-        <div class="absolute top-5 left-5 z-[400] bg-white/95 backdrop-blur px-4 py-2 rounded shadow-lg border border-slate-200">
-            <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
-                <span class="relative flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
-                </span>
-                GIS 실시간 모니터링
-            </h2>
-        </div>
-
-        <div id="errorMsg" class="absolute top-5 left-1/2 transform -translate-x-1/2 z-[1000] bg-rose-600 text-white px-6 py-3 rounded-lg shadow-xl font-bold text-sm hidden"></div>
-    </div>
-
-    <aside id="sidebar">
-        <div class="p-5 border-b border-slate-200 bg-slate-50">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                    필터 검색
-                </h3>
-                <button onclick="resetFilters()" class="text-sm text-slate-500 underline hover:text-teal-600 font-medium">초기화</button>
+    <header class="bg-slate-800 text-white shadow-md z-20 flex-shrink-0 h-16 flex items-center justify-center border-b border-slate-700">
+        <div class="w-full max-w-[1920px] px-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-lg md:text-xl font-bold tracking-tight flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-teal-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+                    </svg>
+                    서부안전팀 정압기 통합 대시보드
+                </h1>
             </div>
             
-            <div class="space-y-3">
-                <div class="flex gap-2">
-                    <select id="loopFilter" onchange="applyFilters()" class="flex-1 bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-teal-500 block p-2.5 outline-none font-medium" disabled>
-                        <option value="all">LOOP</option>
-                    </select>
-                    <select id="sectionFilter" onchange="applyFilters()" class="flex-1 bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-teal-500 block p-2.5 outline-none font-medium" disabled>
-                        <option value="all">구간명</option>
-                    </select>
-                </div>
-                <select id="modelFilter" onchange="applyFilters()" class="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-teal-500 block p-2.5 outline-none font-medium" disabled>
-                    <option value="all">모델 전체</option>
-                </select>
+            <div class="flex items-center space-x-3 bg-slate-700 rounded-lg px-4 py-1.5 border border-slate-600 hover:border-teal-500 transition-colors">
+                <label for="csvFileInput" class="cursor-pointer flex items-center gap-2 text-sm font-medium hover:text-teal-300 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                    </svg>
+                    CSV 업로드
+                </label>
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
+                <div class="h-4 w-px bg-slate-500"></div>
+                <span id="fileStatus" class="text-xs text-slate-300 truncate max-w-[150px]">
+                    파일 선택 필요
+                </span>
+            </div>
+        </div>
+        <div id="errorMsg" class="absolute top-16 w-full bg-rose-500 text-white text-xs font-bold text-center py-1 hidden shadow-md z-30"></div>
+    </header>
+
+    <main class="flex-grow p-4 grid grid-cols-1 lg:grid-cols-12 gap-5 main-content-area bg-slate-100 max-w-[1920px] mx-auto w-full min-h-0">
+
+        <div class="lg:col-span-8 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative group h-full">
+            <div id="map" class="w-full h-full z-10 bg-slate-50"></div>
+            <div class="absolute top-4 left-4 z-[400] bg-white/95 backdrop-blur px-3 py-2 rounded-lg shadow-md border border-slate-200">
+                <h2 class="text-xs font-bold text-slate-700 flex items-center gap-2">
+                    <span class="relative flex h-2.5 w-2.5">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-teal-500"></span>
+                    </span>
+                    GIS 위치 모니터링
+                </h2>
             </div>
         </div>
 
-        <div class="px-5 py-3 bg-white border-b border-slate-200 flex justify-between items-center shadow-sm z-10">
-            <span class="text-sm font-bold text-slate-600">조회 목록</span>
-            <span id="list-count" class="bg-teal-100 text-teal-800 text-sm font-extrabold px-3 py-1 rounded-full">0건</span>
-        </div>
+        <div class="lg:col-span-4 flex flex-col gap-4 h-full min-h-0">
+            
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex-shrink-0">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold text-slate-700 flex items-center gap-1">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        검색 필터
+                    </h3>
+                    <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-teal-600 underline">초기화</button>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2">
+                    <select id="loopFilter" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 block p-2.5 outline-none transition-all disabled:opacity-50 disabled:bg-slate-100" disabled>
+                        <option value="all">LOOP 전체</option>
+                    </select>
+                    <select id="sectionFilter" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 block p-2.5 outline-none transition-all disabled:opacity-50 disabled:bg-slate-100" disabled>
+                        <option value="all">구간명 전체</option>
+                    </select>
+                    <select id="modelFilter" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-xs font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 block p-2.5 outline-none transition-all disabled:opacity-50 disabled:bg-slate-100" disabled>
+                        <option value="all">모델 전체</option>
+                    </select>
+                </div>
+            </div>
 
-        <div class="flex-1 custom-scroll bg-slate-100 p-4 relative">
-            <div id="regulator-cards" class="flex flex-col gap-4 pb-10">
-                <div class="flex flex-col items-center justify-center py-20 text-slate-400">
-                    <svg class="w-12 h-12 mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    <p class="text-sm font-medium">CSV 파일을 업로드해주세요.</p>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-white z-10 flex-shrink-0">
+                    <h3 class="font-bold text-slate-800 text-sm">정압기 목록</h3>
+                    <span id="list-count" class="bg-teal-50 text-teal-700 text-xs font-bold px-2.5 py-1 rounded-full border border-teal-100">0개</span>
+                </div>
+                
+                <div id="data-list-container" class="flex-1 overflow-y-auto p-4 bg-slate-50">
+                    <div id="regulator-cards" class="grid grid-cols-1 gap-3 pb-4 min-h-full content-start">
+                        <div class="col-span-1 flex flex-col items-center justify-center py-20 text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 opacity-40 mb-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            <p class="text-xs">데이터 파일을 불러와주세요.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </aside>
+    </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha2d-p4z3r8gq333+7c3s2c4v4q0d1d2s3d4t5u6w7x8y9z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z" crossorigin=""></script>
+
     <script>
-        // 전역 변수
+        // --- 1. Global Config ---
         let regulators = [];
         let map = null;
-        let markers = L.layerGroup(); 
+        let markers = L.layerGroup(); // Global Layer Group
         
         const LOOP_COLORS = {
-            '1': '#3b82f6', '2': '#10b981', '3': '#f59e0b', '4': '#8b5cf6', 
-            '5': '#ef4444', '6': '#06b6d4', '7': '#ec4899', '8': '#f97316', 
-            '9': '#6366f1', '10': '#14b8a6', 'default': '#64748b'
+            '1': '#3b82f6', // Blue
+            '2': '#10b981', // Emerald
+            '3': '#f59e0b', // Amber
+            '4': '#8b5cf6', // Violet
+            '5': '#ef4444', // Red
+            '6': '#06b6d4', // Cyan
+            '7': '#ec4899', // Pink
+            '8': '#f97316', // Orange
+            '9': '#6366f1', // Indigo
+            '10': '#14b8a6', // Teal
+            'default': '#64748b' // Slate
         };
 
         const icons = {
-            pressure: `<svg class="w-4 h-4 text-slate-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`,
-            valve: `<svg class="w-4 h-4 text-slate-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>`,
-            user: `<svg class="w-4 h-4 text-slate-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`
+            pressure: `<svg class="w-3.5 h-3.5 text-slate-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`,
+            valve: `<svg class="w-3.5 h-3.5 text-slate-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>`,
+            user: `<svg class="w-3.5 h-3.5 text-slate-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`,
+            calendar: `<svg class="w-3.5 h-3.5 text-slate-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`
         };
 
-        // 데이터 파싱
+        // --- 2. CSV Parsing & Logic ---
         function parseCSV(csvString) {
             const lines = csvString.trim().split('\n').filter(line => line.trim() !== '');
-            if (lines.length < 2) throw new Error("데이터 형식이 올바르지 않습니다.");
+            if (lines.length < 2) throw new Error("데이터가 부족합니다.");
             const headers = lines[0].split(',').map(h => h.trim());
-            if (!headers.includes('Lon') || !headers.includes('Lat')) throw new Error("'Lon', 'Lat' 좌표 컬럼이 필요합니다.");
+            if (!headers.includes('Lon') || !headers.includes('Lat')) throw new Error("'Lon', 'Lat' 컬럼 필요");
 
             return lines.slice(1).map(line => {
                 const values = line.split(',');
@@ -222,98 +211,132 @@
             const currentYear = new Date().getFullYear();
             let year = parseInt(dateStr.substring(0, 4), 10);
             if (isNaN(year)) year = currentYear;
+            
+            // 짝수해=짝수시공(분해), 홀수해=홀수시공(분해)
             const isMatch = (currentYear % 2) === (year % 2);
+            
             return isMatch 
-                ? { text: '분해점검 대상', class: 'bg-rose-50 text-rose-700 border-rose-200' }
-                : { text: '필터점검 대상', class: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+                ? { text: '분해점검', class: 'bg-rose-100 text-rose-700 border border-rose-200' }
+                : { text: '필터점검', class: 'bg-emerald-100 text-emerald-700 border border-emerald-200' };
         }
 
         function handleFileSelect(event) {
             const file = event.target.files[0];
             const status = document.getElementById('fileStatus');
-            const errDiv = document.getElementById('errorMsg');
+            const err = document.getElementById('errorMsg');
             
-            errDiv.classList.add('hidden');
+            err.classList.add('hidden');
             if (!file) return;
 
             status.textContent = `로드 중...`;
             const reader = new FileReader();
-            
             reader.onload = (e) => {
                 try {
                     initDashboard(e.target.result);
-                    status.textContent = `${file.name}`;
-                    status.className = "text-sm text-teal-600 font-bold hidden sm:block";
+                    status.textContent = `완료: ${file.name}`;
+                    status.className = "text-xs text-teal-300 font-bold truncate max-w-[150px]";
                 } catch (error) {
-                    errDiv.textContent = `오류: ${error.message}`;
-                    errDiv.classList.remove('hidden');
+                    console.error(error);
+                    err.textContent = `데이터 오류: ${error.message}`;
+                    err.classList.remove('hidden');
                     status.textContent = '실패';
-                    setTimeout(() => errDiv.classList.add('hidden'), 3000);
                 }
             };
             reader.readAsText(file, 'euc-kr');
         }
 
-        // 카드 생성
-        function createRegulatorCard(r, loopColor) {
+        // --- 3. UI Generation (Updated Layout) ---
+        function createRegulatorCard(regulator, loopColor) {
             const card = document.createElement('div');
-            card.className = 'bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:border-teal-500 hover:shadow-md transition-all cursor-pointer group';
+            card.className = 'w-full bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-teal-400 transition-all duration-200 cursor-pointer group flex flex-col overflow-hidden';
             
-            const isPriority = r.isPriority;
-            const titleClass = isPriority ? 'text-rose-600' : 'text-slate-900';
-            
+            const isPriority = regulator.isPriority;
+            const titleClass = isPriority ? 'text-rose-600' : 'text-slate-800';
+            // [수정] 우선관리 -> 우선방출
+            const priorityBadge = isPriority 
+                ? `<span class="ml-auto text-[10px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full border border-rose-100 font-bold">우선방출</span>` 
+                : `<span class="ml-auto"></span>`;
+
             card.innerHTML = `
-                <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm flex-shrink-0" style="background-color: ${loopColor}">
-                            ${r.LOOP === 'default' ? '-' : r.LOOP}
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="text-base font-bold ${titleClass} truncate leading-tight">${r['정압기명']}</h4>
-                            <p class="text-sm text-slate-500 mt-0.5 truncate">${r['모델명'] || '모델 미정'}</p>
-                        </div>
+                <div class="px-4 py-3 flex items-center border-b border-slate-50 bg-white">
+                    <span class="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-xs font-bold mr-3 shadow-sm ring-2 ring-white" style="background-color: ${loopColor};">
+                        ${regulator.LOOP === 'default' ? '-' : regulator.LOOP}
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <h4 class="text-sm font-bold ${titleClass} truncate" title="${regulator['정압기명']}">${regulator['정압기명']}</h4>
+                        <p class="text-[11px] text-slate-400 truncate">${regulator['모델명'] || '모델 정보 없음'}</p>
                     </div>
-                    <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-                        ${isPriority ? '<span class="px-2 py-0.5 bg-rose-100 text-rose-700 text-xs font-bold rounded border border-rose-200">우선방출</span>' : ''}
-                        <span class="px-2 py-0.5 text-xs font-bold rounded border ${r.inspection.class}">${r.inspection.text}</span>
-                    </div>
+                    ${priorityBadge}
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3 mb-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div>
-                        <span class="text-xs text-slate-500 flex items-center mb-1">${icons.pressure} 입/출구 압력</span>
-                        <div class="font-mono text-sm font-bold text-slate-700 truncate">
-                            ${r['입구압력(Mpa)']} <span class="text-slate-400 mx-1">/</span> ${r['출구압력(kPa)']}
+                <div class="p-3 bg-slate-50/50">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        
+                        <div class="col-span-1 flex items-center text-slate-600 font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-2"></span>
+                            ${regulator['구간명']}
                         </div>
-                    </div>
-                    <div>
-                        <span class="text-xs text-slate-500 flex items-center mb-1">${icons.valve} 개도율</span>
-                        <div class="font-mono text-sm font-bold text-teal-600">
-                            ${r['센싱밸브 개도율'] || '-'}%
+                        <div class="col-span-1 flex justify-end">
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold ${regulator.inspection.class}">
+                                ${regulator.inspection.text}
+                            </span>
                         </div>
-                    </div>
-                </div>
 
-                <div class="flex justify-between items-center text-sm text-slate-500 pt-2 border-t border-slate-100">
-                    <div class="flex items-center gap-2 truncate">
-                        ${icons.user} <span class="font-medium text-slate-700">${r['담당자']}</span>
-                        <span class="text-slate-300">|</span>
-                        <span class="truncate">${r['구간명']}</span>
-                    </div>
-                    <div class="text-xs text-slate-400 flex-shrink-0">
-                        ${r['시공감리일자']}
+                        <div class="col-span-2 h-px bg-slate-100 my-1"></div>
+
+                        <div class="col-span-1 flex flex-col justify-center p-2 bg-white rounded border border-slate-100">
+                            <div class="flex items-center text-[10px] text-slate-400 mb-0.5">
+                                ${icons.pressure} 입/출구 압력
+                            </div>
+                            <div class="font-mono font-bold text-slate-700">
+                                ${regulator['입구압력(Mpa)']} / ${regulator['출구압력(kPa)']}
+                            </div>
+                        </div>
+                        <div class="col-span-1 flex flex-col justify-center p-2 bg-white rounded border border-slate-100">
+                            <div class="flex items-center text-[10px] text-slate-400 mb-0.5">
+                                ${icons.valve} 개도율
+                            </div>
+                            <div class="font-mono font-bold text-slate-700">
+                                ${regulator['센싱밸브 개도율'] || '-'}%
+                            </div>
+                        </div>
+
+                        <div class="col-span-1 flex items-center text-slate-500 mt-1 pl-1">
+                            ${icons.user} <span class="truncate">${regulator['담당자']}</span>
+                        </div>
+                        <div class="col-span-1 flex items-center justify-end text-slate-500 mt-1 pr-1">
+                            ${icons.calendar} <span>${regulator['시공감리일자']}</span>
+                        </div>
+
                     </div>
                 </div>
             `;
             
             card.addEventListener('click', () => {
-                if (map) {
-                    map.setView([r.Lat, r.Lon], 17, { animate: true });
-                    // 모바일이면 스크롤 올리기
-                    if(window.innerWidth < 1024) window.scrollTo({top:0, behavior:'smooth'});
-                }
+                if (map) map.setView([regulator.Lat, regulator.Lon], 16, { animate: true });
             });
+
             return card;
+        }
+
+        function populateFilters() {
+            const els = ['loopFilter', 'modelFilter', 'sectionFilter'].map(id => document.getElementById(id));
+            els.forEach(el => el.disabled = false);
+
+            const clean = (sel) => { while(sel.options.length > 1) sel.remove(1); };
+            els.forEach(clean);
+
+            const loops = [...new Set(regulators.map(r => r.LOOP))].filter(l => l !== 'default').sort((a,b)=>parseInt(a)-parseInt(b));
+            const models = [...new Set(regulators.map(r => r['정압기모델']).filter(Boolean))].sort();
+            const sections = [...new Set(regulators.map(r => r['구간명']).filter(Boolean))].sort();
+
+            const elLoop = document.getElementById('loopFilter');
+            const elSection = document.getElementById('sectionFilter');
+            const elModel = document.getElementById('modelFilter');
+
+            loops.forEach(v => elLoop.add(new Option(`LOOP ${v}`, v)));
+            sections.forEach(v => elSection.add(new Option(v, v)));
+            models.forEach(v => elModel.add(new Option(v, v)));
         }
 
         function renderData(data) {
@@ -321,11 +344,12 @@
             const countEl = document.getElementById('list-count');
             
             container.innerHTML = '';
+            // [수정] 마커 초기화: 레이어 그룹을 비웁니다 (지도에서 제거되지 않고 내용만 비워짐)
             markers.clearLayers();
-            countEl.textContent = `${data.length}건`;
+            countEl.textContent = `${data.length}개`;
 
             if (data.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-400">조건에 맞는 결과가 없습니다.</div>`;
+                container.innerHTML = `<div class="col-span-1 text-center py-10 text-slate-400 text-sm">결과가 없습니다.</div>`;
                 return;
             }
 
@@ -334,54 +358,41 @@
                 const loop = r.LOOP || 'default';
                 const color = LOOP_COLORS[loop] || LOOP_COLORS['default'];
                 
+                // Add Card
                 container.appendChild(createRegulatorCard(r, color));
 
+                // Add Marker
                 if (!isNaN(r.Lat) && !isNaN(r.Lon)) {
-                    const iconHtml = `<div class="regulator-icon" style="background-color: ${color}; width: 36px; height: 36px;">${loop}</div>`;
                     const icon = L.divIcon({
                         className: '',
-                        html: iconHtml,
-                        iconSize: [36, 36],
-                        iconAnchor: [18, 18],
+                        html: `<div class="regulator-icon" style="background-color: ${color};">${loop}</div>`,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16],
                         popupAnchor: [0, -10]
                     });
                     
-                    const popupContent = `
-                        <div class="p-1 min-w-[180px]">
-                            <div class="font-bold text-base mb-1 text-slate-800">${r['정압기명']}</div>
-                            <div class="text-xs text-slate-500 mb-2">${r['구간명']}</div>
-                            <div class="text-sm border-t border-slate-200 pt-2 space-y-1">
-                                <div class="flex justify-between"><span>입구:</span> <b class="font-mono">${r['입구압력(Mpa)']}</b></div>
-                                <div class="flex justify-between"><span>출구:</span> <b class="font-mono">${r['출구압력(kPa)']}</b></div>
-                                <div class="flex justify-between text-teal-600"><span>개도율:</span> <b class="font-mono">${r['센싱밸브 개도율']}%</b></div>
+                    const popup = `
+                        <div class="font-sans min-w-[200px]">
+                            <div class="font-bold text-slate-800 mb-1 border-b pb-1 flex justify-between">
+                                <span>${r['정압기명']}</span>
+                                ${r.isPriority ? '<span class="text-rose-500 text-[10px]">우선방출</span>' : ''}
+                            </div>
+                            <div class="text-xs text-slate-600">
+                                <div><span class="font-semibold">압력:</span> ${r['입구압력(Mpa)']} / ${r['출구압력(kPa)']}</div>
+                                <div><span class="font-semibold">개도율:</span> ${r['센싱밸브 개도율']}%</div>
                             </div>
                         </div>
                     `;
 
-                    const m = L.marker([r.Lat, r.Lon], { icon: icon }).bindPopup(popupContent);
-                    markers.addLayer(m);
+                    const m = L.marker([r.Lat, r.Lon], { icon: icon }).bindPopup(popup);
+                    markers.addLayer(m); // LayerGroup에 추가 (이미 맵에 붙어있으므로 즉시 보임)
                     bounds.push([r.Lat, r.Lon]);
                 }
             });
 
             if (bounds.length && map) {
-                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
             }
-        }
-
-        function populateFilters() {
-            const els = ['loopFilter', 'modelFilter', 'sectionFilter'].map(id => document.getElementById(id));
-            els.forEach(el => el.disabled = false);
-            els.forEach(sel => { while(sel.options.length > 1) sel.remove(1); });
-
-            const loops = [...new Set(regulators.map(r => r.LOOP))].filter(l => l !== 'default').sort((a,b) => parseInt(a)-parseInt(b));
-            const models = [...new Set(regulators.map(r => r['정압기모델']).filter(Boolean))].sort();
-            const sections = [...new Set(regulators.map(r => r['구간명']).filter(Boolean))].sort();
-
-            const [elLoop, elModel, elSection] = els;
-            loops.forEach(v => elLoop.add(new Option(`LOOP ${v}`, v)));
-            sections.forEach(v => elSection.add(new Option(v, v)));
-            models.forEach(v => elModel.add(new Option(v, v)));
         }
 
         function applyFilters() {
@@ -420,31 +431,32 @@
                 };
             });
 
+            // Ensure map is ready (It should be due to DOMContentLoaded)
             if (!map) initMap(); 
+
             populateFilters();
             renderData(regulators);
             resetFilters();
         }
 
         function initMap() {
-            if (map) return;
             map = L.map('map', { zoomControl: false }).setView([36.77, 126.45], 11);
-            L.control.zoom({ position: 'topright' }).addTo(map);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap',
+                attribution: '&copy; OpenStreetMap & CARTO',
                 subdomains: 'abcd',
                 maxZoom: 20
             }).addTo(map);
+            
+            // [수정] 중요: 맵 생성 시 markers 그룹을 바로 맵에 부착
             markers.addTo(map);
             
-            // 지도 크기 재계산 (렌더링 이슈 방지)
-            setTimeout(() => map.invalidateSize(), 200);
-            window.addEventListener('resize', () => map.invalidateSize());
+            new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById('map'));
         }
-
-        // 초기 실행
+        
+        // Init empty map immediately on load
         document.addEventListener('DOMContentLoaded', () => {
-             initMap();
+             if (!map) initMap();
         });
     </script>
 </body>
